@@ -11,6 +11,7 @@ public class CategoryItemsController(AppDbContext ctx, FileService fileService) 
     {
         var cItems = await ctx.CategoryItems
             .Find(x => x.CategoryId == categoryId)
+            .Project(CategoryItemViewModels.FlatProjection)
             .ToListAsync();
         
         return Ok(cItems);
@@ -21,6 +22,7 @@ public class CategoryItemsController(AppDbContext ctx, FileService fileService) 
     {
         var cItem = await ctx.CategoryItems
             .Find(x => x.Id == id)
+            .Project(CategoryItemViewModels.Projection)
             .FirstOrDefaultAsync();
 
         if (cItem == null)

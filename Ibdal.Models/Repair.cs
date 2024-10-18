@@ -2,7 +2,7 @@
 
 namespace Ibdal.Models;
 
-public class Repair : BaseModel<int>
+public class Repair : BaseModel
 {
     public required Car Car { get; set; }
     public required Station Station { get; set; }

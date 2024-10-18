@@ -2,7 +2,7 @@
 
 namespace Ibdal.Models;
 
-public class Order : Archivable<int>
+public class Order : Archivable
 {
     public int OrderNumber { get; set; }
     public required Station Station { get; set; }

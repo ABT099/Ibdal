@@ -2,7 +2,7 @@
 
 namespace Ibdal.Models;
 
-public class OilChange : BaseModel<int>
+public class OilChange : BaseModel
 {
     public required Product Oil { get; set; }
     public int Quantity { get; set; }

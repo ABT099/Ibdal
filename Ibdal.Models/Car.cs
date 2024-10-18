@@ -2,9 +2,9 @@
 
 namespace Ibdal.Models;
 
-public class Car : Archivable<int>
+public class Car : Archivable
 {
-    public int OwnerId { get; set; }
+    public required string OwnerId { get; set; }
     public required string PlateNumber { get; set; }
     public required string ChaseNumber { get; set; }
     public required string CarType { get; set; }

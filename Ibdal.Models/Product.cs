@@ -2,7 +2,7 @@
 
 namespace Ibdal.Models;
 
-public class Product : BaseModel<int>
+public class Product : BaseModel
 {
     public required string Name { get; set; }
     public required string Category { get; set; }

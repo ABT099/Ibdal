@@ -2,7 +2,7 @@
 
 namespace Ibdal.Models;
 
-public class Certificate : BaseModel<int>
+public class Certificate : BaseModel
 {
     public required string Name { get; set; }
     public required string Description { get; set; }

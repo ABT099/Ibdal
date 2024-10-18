@@ -1,6 +1,8 @@
-﻿namespace Ibdal.Models;
+﻿using Ibdal.Models.Abstractions;
 
-public class Payment
+namespace Ibdal.Models;
+
+public class Payment : BaseModel
 {
     public required Purchase Purchase { get; set; }
     public double Amount { get; set; }

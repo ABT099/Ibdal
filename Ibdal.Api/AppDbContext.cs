@@ -1,6 +1,5 @@
 ﻿using Ibdal.Models;
 using Identity.Mongo;
-using MongoDB.Driver;
 
 namespace Ibdal.Api;
 
@@ -25,6 +24,8 @@ public class AppDbContext : MongoDbContext
         Users = Database.GetCollection<User>("users");
     }
 
+    public IMongoClient Client => Database.Client;
+    
     public required IMongoCollection<Car> Cars { get; set; }
     public required IMongoCollection<Category> Categories { get; set; }
     public required IMongoCollection<CategoryItem> CategoryItems { get; set; }

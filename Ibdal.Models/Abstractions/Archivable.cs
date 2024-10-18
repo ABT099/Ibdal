@@ -2,5 +2,5 @@
 
 public class Archivable<TKey> : BaseModel<TKey>
 {
-    public bool IsDeleted { get; init; } = false;
+    public bool IsDeleted { get; set; } = false;
 }

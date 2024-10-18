@@ -2,7 +2,7 @@
 
 public class UpdateCarForm
 {
-    public int Id { get; set; }
+    public required string Id { get; set; }
     public required string DriverName { get; set; }
     public required string DriverPhoneNumber { get; set; }
     public required string PlateNumber { get; set; }

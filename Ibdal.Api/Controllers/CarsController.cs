@@ -1,13 +1,11 @@
-﻿using Ibdal.Models;
-
-namespace Ibdal.Api.Controllers;
+﻿namespace Ibdal.Api.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
 public class CarsController(AppDbContext ctx) : ControllerBase
 {
-    [HttpGet("user/{userId:int}")]
-    public async Task<IActionResult> GetAllByUser(int userId)
+    [HttpGet("user/{userId}")]
+    public async Task<IActionResult> GetAllByUser(string userId)
     {
         var cars = await ctx.Cars
             .Find(x => x.OwnerId == userId)
@@ -17,8 +15,8 @@ public class CarsController(AppDbContext ctx) : ControllerBase
         return Ok(cars);
     }
 
-    [HttpGet("{id:int}")]
-    public async Task<ActionResult> GetById(int id)
+    [HttpGet("{id:}")]
+    public async Task<ActionResult> GetById(string id)
     {
         var car = await ctx.Cars
             .Find(x => x.Id == id)
@@ -68,19 +66,19 @@ public class CarsController(AppDbContext ctx) : ControllerBase
                 CarType = createCarForm.CarType,
                 CarModel = createCarForm.CarModel
             };
-            
-            await ctx.Cars.InsertOneAsync(car);
-            
-            owner.Cars.Add(car);
-            
-            await ctx.Users.ReplaceOneAsync(session, x => x.Id == owner.Id, owner);
+            await ctx.Cars.InsertOneAsync(session, car);
+
+            await ctx.Users.UpdateOneAsync(
+                session,
+                x => x.Id == createCarForm.OwnerId,
+                Builders<User>.Update.Push(u => u.Cars, car));
             
             await session.CommitTransactionAsync();
-            return CreatedAtAction(nameof(GetByPlate), new { plateNumber = car.PlateNumber }, car.Id);
-
+            return CreatedAtAction(nameof(GetById), new { id = car.Id }, car.Id);
         }
         catch (Exception)
         {
+            await session.AbortTransactionAsync();
             return Problem("Something went wrong");
         }
     }
@@ -118,7 +116,15 @@ public class CarsController(AppDbContext ctx) : ControllerBase
             owner.Name = updateCarForm.DriverName;
             
             var carIndex = owner.Cars.IndexOf(car);
-            owner.Cars[carIndex] = car;
+            
+            if (carIndex != -1)
+            {
+                owner.Cars[carIndex] = car;
+            }
+            else
+            {
+                owner.Cars.Add(car);
+            }
             
             await ctx.Users.ReplaceOneAsync(session, x => x.Id == owner.Id, owner);
             
@@ -127,12 +133,13 @@ public class CarsController(AppDbContext ctx) : ControllerBase
         }
         catch (Exception)
         {
+            await session.AbortTransactionAsync();
             return Problem("Something went wrong");
         }
     }
 
-    [HttpDelete("{id:int}")]
-    public async Task<IActionResult> Delete(int id)
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> Delete(string id)
     {
         var car = await ctx.Cars
             .Find(x => x.Id == id)

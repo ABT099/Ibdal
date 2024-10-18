@@ -14,4 +14,8 @@
       <PackageReference Include="Identity.Mongo" Version="1.0.2" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="wwwroot\" />
+    </ItemGroup>
+
 </Project>

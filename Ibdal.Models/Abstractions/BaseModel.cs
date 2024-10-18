@@ -6,6 +6,7 @@ namespace Ibdal.Models.Abstractions;
 public abstract class BaseModel
 {
     [BsonId]
-    public ObjectId Id { get; init; }
+    [BsonRepresentation(BsonType.ObjectId)]
+    public string Id { get; init; } = null!;
     public DateTime CreatedAt { get; init; } = DateTime.UtcNow;
 }

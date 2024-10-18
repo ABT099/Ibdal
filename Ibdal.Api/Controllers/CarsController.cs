@@ -7,7 +7,7 @@ namespace Ibdal.Api.Controllers;
 public class CarsController(AppDbContext ctx) : ControllerBase
 {
     [HttpGet("user/{userId:int}")]
-    public async Task<ActionResult<IEnumerable<Car>>> GetAllByUser(int userId)
+    public async Task<IActionResult> GetAllByUser(int userId)
     {
         var cars = await ctx.Cars
             .Find(x => x.OwnerId == userId)
@@ -18,7 +18,7 @@ public class CarsController(AppDbContext ctx) : ControllerBase
     }
 
     [HttpGet("{id:int}")]
-    public async Task<ActionResult<Car>> GetById(int id)
+    public async Task<ActionResult> GetById(int id)
     {
         var car = await ctx.Cars
             .Find(x => x.Id == id)
@@ -32,7 +32,7 @@ public class CarsController(AppDbContext ctx) : ControllerBase
     }
 
     [HttpGet("plate/{plateNumber}")]
-    public async Task<ActionResult<Car>> GetByPlate(string plateNumber)
+    public async Task<ActionResult> GetByPlate(string plateNumber)
     {
         var car = await ctx.Cars
             .Find(x => x.PlateNumber == plateNumber)

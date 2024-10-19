@@ -4,6 +4,7 @@ namespace Ibdal.Models;
 
 public class OilChange : BaseModel
 {
+    public required string CarId { get; set; }
     public required Product Oil { get; set; }
     public int Quantity { get; set; }
     public int CurrentCarMeter { get; set; }

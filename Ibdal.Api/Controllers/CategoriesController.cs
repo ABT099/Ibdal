@@ -47,35 +47,27 @@ public class CategoriesController(AppDbContext ctx) : ControllerBase
     [HttpPut]
     public async Task<IActionResult> Update([FromBody] UpdateCategoryForm updateCategoryForm)
     {
-        var category = await ctx.Categories
-            .Find(x => x.Id == updateCategoryForm.Id)
-            .FirstOrDefaultAsync();
+        var result = await ctx.Categories.UpdateOneAsync(
+            x => x.Id == updateCategoryForm.Id,
+            Builders<Category>.Update.Set(x => x.Name, updateCategoryForm.Name));
 
-        if (category == null)
+        if (!result.IsAcknowledged)
         {
             return NotFound();
         }
-        
-        category.Name = updateCategoryForm.Name;
-        
-        await ctx.Categories.ReplaceOneAsync(x => x.Id == updateCategoryForm.Id, category);
         
         return Ok();
     }
 
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(string id)
-    {
-        var category = await ctx.Categories
-            .Find(x => x.Id == id)
-            .FirstOrDefaultAsync();
+    {   
+        var result = await ctx.Categories.DeleteOneAsync(x => x.Id == id);
 
-        if (category == null)
+        if (!result.IsAcknowledged)
         {
             return NotFound();
         }
-        
-        await ctx.Categories.DeleteOneAsync(x => x.Id == id);
         
         return Ok();
     }

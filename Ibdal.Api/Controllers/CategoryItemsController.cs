@@ -4,7 +4,7 @@ namespace Ibdal.Api.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
-public class CategoryItemsController(AppDbContext ctx, FileService fileService) : ControllerBase
+public class CategoryItemsController(AppDbContext ctx) : ControllerBase
 {
     [HttpGet("category/{categoryId}")]
     public async Task<IActionResult> GetAllByCategoryId(string categoryId)
@@ -36,22 +36,13 @@ public class CategoryItemsController(AppDbContext ctx, FileService fileService) 
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateCategoryItemForm createCategoryItemForm)
     {
-        var category = await ctx.Categories
-            .Find(x => x.Id == createCategoryItemForm.CategoryId)
-            .FirstOrDefaultAsync();
-
-        if (category == null)
-        {
-            return NotFound("category not found");
-        }
-        
-        var imgUrl = fileService.SaveImage(createCategoryItemForm.Image);
-
         using var session = await ctx.Client.StartSessionAsync();
         session.StartTransaction();
 
         try
         {
+            var imgUrl = FileService.SaveFile(createCategoryItemForm.Image);
+            
             var categoryItem = new CategoryItem
             {
                 CategoryId = createCategoryItemForm.CategoryId,
@@ -61,10 +52,17 @@ public class CategoryItemsController(AppDbContext ctx, FileService fileService) 
             };
             await ctx.CategoryItems.InsertOneAsync(session, categoryItem);
             
-            await ctx.Categories.UpdateOneAsync(
+            var categoryResult = await ctx.Categories.UpdateOneAsync(
                 session, 
                 x => x.Id == createCategoryItemForm.CategoryId, 
-                Builders<Category>.Update.Push(c => c.CategoryItems, categoryItem)); // Example of updating a field
+                Builders<Category>.Update.Push(c => c.CategoryItems, categoryItem));
+
+            if (!categoryResult.IsAcknowledged)
+            {
+                FileService.DeleteFile(imgUrl);
+                await session.AbortTransactionAsync();
+                return NotFound();
+            }
 
             await session.CommitTransactionAsync();
             return Ok();
@@ -102,7 +100,7 @@ public class CategoryItemsController(AppDbContext ctx, FileService fileService) 
         
         if (updateCategoryItemForm.Image != null)
         {
-            imgUrl = fileService.SaveImage(updateCategoryItemForm.Image);
+            imgUrl = FileService.SaveFile(updateCategoryItemForm.Image);
         }
         
         using var session = await ctx.Client.StartSessionAsync();
@@ -146,16 +144,12 @@ public class CategoryItemsController(AppDbContext ctx, FileService fileService) 
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(string id)
     {
-        var categoryItem = await ctx.CategoryItems
-            .Find(x => x.Id == id)
-            .FirstOrDefaultAsync();
+        var result = await ctx.CategoryItems.DeleteOneAsync(x => x.Id == id);
 
-        if (categoryItem == null)
+        if (!result.IsAcknowledged)
         {
             return NotFound();
         }
-        
-        await ctx.CategoryItems.DeleteOneAsync(x => x.Id == id);
         
         return Ok();
     }

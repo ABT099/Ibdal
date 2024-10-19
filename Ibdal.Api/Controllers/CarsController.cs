@@ -51,27 +51,27 @@ public class CarsController(AppDbContext ctx) : ControllerBase
 
         try
         {
-            var owner = await ctx.Users
-                .Find(x => x.Id == createCarForm.OwnerId)
-                .FirstOrDefaultAsync();
-            
-            if (owner is null)
-                return NotFound("owner does not exist");
-            
             var car = new Car
             {
-                OwnerId = owner.Id,
+                OwnerId = createCarForm.OwnerId,
                 PlateNumber = createCarForm.PlateNumber,
                 ChaseNumber = createCarForm.ChaseNumber,
                 CarType = createCarForm.CarType,
                 CarModel = createCarForm.CarModel
             };
-            await ctx.Cars.InsertOneAsync(session, car);
 
-            await ctx.Users.UpdateOneAsync(
+            var ownerResult = await ctx.Users.UpdateOneAsync(
                 session,
                 x => x.Id == createCarForm.OwnerId,
                 Builders<User>.Update.Push(u => u.Cars, car));
+
+            if (!ownerResult.IsAcknowledged)
+            {
+                await session.AbortTransactionAsync();
+                return NotFound();
+            }
+            
+            await ctx.Cars.InsertOneAsync(session, car);
             
             await session.CommitTransactionAsync();
             return CreatedAtAction(nameof(GetById), new { id = car.Id }, car.Id);
@@ -141,16 +141,14 @@ public class CarsController(AppDbContext ctx) : ControllerBase
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(string id)
     {
-        var car = await ctx.Cars
-            .Find(x => x.Id == id)
-            .FirstOrDefaultAsync();
-        
-        if (car is null)
+        var result = await ctx.Cars.UpdateOneAsync(
+            x => x.Id == id,
+            Builders<Car>.Update.Set(x => x.IsDeleted, true));
+
+        if (!result.IsAcknowledged)
+        {
             return NotFound();
-        
-        car.IsDeleted = true;
-        
-        await ctx.Cars.ReplaceOneAsync(x => x.Id == id, car);
+        }
         
         return Ok();
     }

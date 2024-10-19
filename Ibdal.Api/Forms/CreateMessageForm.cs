@@ -1,8 +1,6 @@
-﻿using Ibdal.Models.Abstractions;
+﻿namespace Ibdal.Api.Forms;
 
-namespace Ibdal.Models;
-
-public class Message : BaseModel
+public class CreateMessageForm
 {
     public required string ChatId { get; set; }
     public required string SenderId { get; set; }

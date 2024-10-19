@@ -11,6 +11,7 @@ public class AppDbContext : MongoDbContext
         Categories = Database.GetCollection<Category>("categories");
         CategoryItems = Database.GetCollection<CategoryItem>("category_items");
         Certificates = Database.GetCollection<Certificate>("certificates");
+        Chats = Database.GetCollection<Chat>("chats");
         Content = Database.GetCollection<Content>("content");
         Messages = Database.GetCollection<Message>("messages");
         Notifications = Database.GetCollection<Notification>("notifications");
@@ -30,6 +31,7 @@ public class AppDbContext : MongoDbContext
     public required IMongoCollection<Category> Categories { get; set; }
     public required IMongoCollection<CategoryItem> CategoryItems { get; set; }
     public required IMongoCollection<Certificate> Certificates { get; set; }
+    public required IMongoCollection<Chat> Chats { get; set; }
     public required IMongoCollection<Content> Content { get; set; }
     public required IMongoCollection<Message> Messages { get; set; }
     public required IMongoCollection<Notification> Notifications { get; set; }

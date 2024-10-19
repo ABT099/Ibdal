@@ -3,20 +3,20 @@
 public static class CertificateViewModels
 {
     public static Expression<Func<Certificate, object>> FlatProjection =>
-        categoryItem => new
+        certificate => new
         {
-            categoryItem.Id,
-            categoryItem.Name,
-            categoryItem.Description,
-            CoverImageUrl = categoryItem.ImagesUrls.FirstOrDefault()
+            certificate.Id,
+            certificate.Name,
+            certificate.Description,
+            CoverImageUrl = certificate.ImagesUrls.FirstOrDefault()
         };
     
     public static Expression<Func<Certificate, object>> Projection =>
-        categoryItem => new
+        certificate => new
         {
-            categoryItem.Id,
-            categoryItem.Name,
-            categoryItem.Description,
-            categoryItem.ImagesUrls
+            certificate.Id,
+            certificate.Name,
+            certificate.Description,
+            certificate.ImagesUrls
         };
 }

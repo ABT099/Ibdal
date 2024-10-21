@@ -1,4 +1,5 @@
-﻿using Identity.Mongo;
+﻿using FluentValidation.AspNetCore;
+using Identity.Mongo;
 using Microsoft.AspNetCore.Identity;
 
 namespace Ibdal.Api;
@@ -9,6 +10,7 @@ public static class RegisterServices
     {
         builder.Services.AddControllers();
         builder.Services.AddEndpointsApiExplorer();
+        builder.Services.AddFluentValidationAutoValidation();
         
         builder.Services.AddMongoDb<AppDbContext>(
             connectionString: builder.Configuration["MongoDb:ConnectionString"]!,

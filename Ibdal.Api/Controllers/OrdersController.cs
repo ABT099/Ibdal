@@ -4,7 +4,7 @@ namespace Ibdal.Api.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
-public class OrderController(AppDbContext ctx) : ControllerBase
+public class OrdersController(AppDbContext ctx) : ControllerBase
 {
     [HttpGet]
     public async Task<IActionResult> GetAll()

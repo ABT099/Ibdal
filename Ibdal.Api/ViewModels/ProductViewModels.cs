@@ -9,7 +9,19 @@ public static class ProductViewModels
         {
             product.Id,
             product.Name,
+            product.Category,
             product.Price,
             product.ImageUrl
+        };
+
+    public static Expression<Func<Product, object>> Projection =>
+        product => new
+        {
+            product.Id,
+            product.Name,
+            product.Description,
+            product.Category,
+            product.Price,
+            product.ImageUrl,
         };
 }

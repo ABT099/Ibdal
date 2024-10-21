@@ -141,15 +141,46 @@ public class CarsController(AppDbContext ctx) : ControllerBase
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(string id)
     {
-        var result = await ctx.Cars.UpdateOneAsync(
-            x => x.Id == id,
-            Builders<Car>.Update.Set(x => x.IsDeleted, true));
+        using var session = await ctx.Client.StartSessionAsync();
+        session.StartTransaction();
 
-        if (!result.IsAcknowledged)
+        try
         {
-            return NotFound();
-        }
+            var userId = await ctx.Cars
+                .Find(x => x.Id == id)
+                .Project(x => x.OwnerId)
+                .FirstOrDefaultAsync();
+
+            var carRemoveResult = await ctx.Cars.UpdateOneAsync(
+                session,
+                x => x.Id == id,
+                Builders<Car>.Update.Set(x => x.IsDeleted, true));
+
+            if (!carRemoveResult.IsAcknowledged)
+            {
+                await session.AbortTransactionAsync();
+                return NotFound();
+            }
         
-        return Ok();
+            var userUpdateResult = await ctx.Users.UpdateOneAsync(
+                session,
+                x => x.Id == userId,
+                Builders<User>.Update.PullFilter(x => x.Cars, c => c.Id == id));
+            
+            if (!userUpdateResult.IsAcknowledged)
+            {
+                await session.AbortTransactionAsync();
+                return BadRequest("user does not exist");
+            }
+            
+            await session.CommitTransactionAsync();
+            return Ok();
+        }
+        catch (Exception e)
+        {
+            await session.AbortTransactionAsync();
+            Console.WriteLine(e);
+            return Problem("Something went wrong");
+        }
     }
 }

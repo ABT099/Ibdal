@@ -182,8 +182,8 @@ public class NotificationsController(AppDbContext ctx) : ControllerBase
             .Set(n => n.Title, updateNotificationForm.Title)
             .Set(n => n.Description, updateNotificationForm.Description);
         
-        var currentUserIds = notification.Users.Select(u => u.User.Id).ToList();
-        var currentStationIds = notification.Stations.Select(s => s.Station.Id).ToList();
+        var currentUserIds = notification.Users.Select(u => u.User.Id).ToHashSet();
+        var currentStationIds = notification.Stations.Select(s => s.Station.Id).ToHashSet();
 
         var tasks = new List<Task>();
         

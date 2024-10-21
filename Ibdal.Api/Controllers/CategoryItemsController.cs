@@ -144,13 +144,50 @@ public class CategoryItemsController(AppDbContext ctx) : ControllerBase
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(string id)
     {
-        var result = await ctx.CategoryItems.DeleteOneAsync(x => x.Id == id);
+        using var session = await ctx.Client.StartSessionAsync();
+        session.StartTransaction();
 
-        if (!result.IsAcknowledged)
+        try
         {
-            return NotFound();
+            var result = await ctx.CategoryItems.DeleteOneAsync(session, x => x.Id == id);
+
+            if (!result.IsAcknowledged)
+            {
+                await session.AbortTransactionAsync();
+                return NotFound("category item not found");
+            }
+            
+            var info = await ctx.CategoryItems.Find(x => x.Id == id)
+                .Project(x => new
+                {
+                    x.CategoryId,
+                    x.ImageUrl
+                })
+                .FirstOrDefaultAsync();
+
+            if (info == null)
+            {
+                await session.AbortTransactionAsync();
+                return NotFound("category item not found");
+            }
+
+            await ctx.Categories.UpdateOneAsync(
+                session,
+                x => x.Id == info.CategoryId,
+                Builders<Category>.Update.PullFilter(x => x.CategoryItems, x => x.Id == id));
+
+            FileService.DeleteFile(info.ImageUrl);
+
+            await session.CommitTransactionAsync();
+            return Ok();
         }
+        catch (Exception e)
+        {
+            await session.AbortTransactionAsync();
+            Console.WriteLine(e);
+            return Problem("Something went wrong");
+        }
+
         
-        return Ok();
     }
 }

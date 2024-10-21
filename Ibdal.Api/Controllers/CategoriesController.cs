@@ -61,14 +61,33 @@ public class CategoriesController(AppDbContext ctx) : ControllerBase
 
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(string id)
-    {   
-        var result = await ctx.Categories.DeleteOneAsync(x => x.Id == id);
+    {
+        using var session = await ctx.Client.StartSessionAsync();
+        session.StartTransaction();
 
-        if (!result.IsAcknowledged)
+        try
         {
-            return NotFound();
-        }
+            var result = await ctx.Categories.DeleteOneAsync(session, x => x.Id == id);
+
+            if (!result.IsAcknowledged)
+            {
+                return NotFound();
+            }
         
-        return Ok();
+            var cItemsResult = await ctx.CategoryItems.DeleteManyAsync(session, x => x.CategoryId == id);
+        
+            if (!cItemsResult.IsAcknowledged)
+            {
+                return NotFound();
+            }
+        
+            return Ok();
+        }
+        catch (Exception e)
+        {
+            await session.AbortTransactionAsync();
+            Console.WriteLine(e);
+            return Problem();
+        }
     }
 }

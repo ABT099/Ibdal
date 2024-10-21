@@ -4,6 +4,7 @@
         <TargetFramework>net8.0</TargetFramework>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
+        <UserSecretsId>69b1179c-f34a-4736-8789-975bb99b7084</UserSecretsId>
     </PropertyGroup>
 
     <ItemGroup>
@@ -11,7 +12,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="Identity.Mongo" Version="1.0.2" />
+      <PackageReference Include="Identity.Mongo" Version="1.1.0" />
     </ItemGroup>
 
     <ItemGroup>

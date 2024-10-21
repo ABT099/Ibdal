@@ -6,11 +6,13 @@ public abstract class AppUserModel : Archivable
     {
         Chat = new Chat
         {
-            UserId = Id
+            UserId = Id,
+            Name = Name!
         };
     }
 
     public required string AuthId { get; set; }
+    public required string Name { get; set; }
     public int Points { get; set; } = 0;
     public required string PhoneNumber { get; set; }
     public IList<Car> Cars { get; set; } = [];

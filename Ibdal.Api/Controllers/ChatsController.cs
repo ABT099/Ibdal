@@ -9,6 +9,7 @@ public class ChatsController(AppDbContext ctx) : ControllerBase
     {
         var chats = await ctx.Chats
             .Find(_ => true)
+            .Project(ChatViewModels.FlatProjection)
             .ToListAsync();
         
         return Ok(chats);
@@ -19,6 +20,7 @@ public class ChatsController(AppDbContext ctx) : ControllerBase
     {
         var chat = await ctx.Chats
             .Find(x => x.Id == id)
+            .Project(ChatViewModels.Projection)
             .FirstOrDefaultAsync();
         
         return Ok(chat);

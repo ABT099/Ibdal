@@ -46,8 +46,12 @@ public class RepairsController(AppDbContext ctx) : ControllerBase
             .Find(x => x.Id == id)
             .Project(RepairViewModels.Projection)
             .FirstOrDefaultAsync();
-
-
+        
+        if (repair is null)
+        {
+            return NotFound();
+        }
+        
         return Ok(repair);
     }
 

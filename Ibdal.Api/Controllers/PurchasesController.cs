@@ -31,7 +31,12 @@ public class PurchasesController(AppDbContext ctx) : ControllerBase
         var purchases = await ctx.Purchases
             .Find(x => x.Id == id)
             .Project(PurchaseViewModels.Projection)
-            .ToListAsync();
+            .FirstOrDefaultAsync();
+
+        if (purchases == null)
+        {
+            return NotFound();
+        }
         
         return Ok(purchases);
     }

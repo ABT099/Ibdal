@@ -14,6 +14,20 @@ public class CarsController(AppDbContext ctx) : ControllerBase
         
         return Ok(cars);
     }
+    
+    [HttpGet("station/{stationId}")]
+    public async Task<IActionResult> GetAllByStation(string stationId)
+    {
+        var cars = await ctx.Stations
+            .Find(x => x.Id == stationId)
+            .Project(x => new
+            {
+                Cars = x.Cars.Select(y => CarViewModels.CreateFlat(y))
+            })
+            .FirstOrDefaultAsync();
+        
+        return Ok(cars);
+    }
 
     [HttpGet("{id:}")]
     public async Task<ActionResult> GetById(string id)

@@ -7,5 +7,5 @@ public class Station : AppUserModel
     public required string City { get; set; }
     public required string Address { get; set; }
     public IList<Repair> Repairs { get; set; } = [];
-    public IList<Order> Orders { get; set; } = [];
+    public IList<Purchase> Purchases { get; set; } = [];
 }

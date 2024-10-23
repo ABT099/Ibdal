@@ -12,6 +12,8 @@ public static class OrderViewModels
             TotalPrice = order.ProductsInfo.Select(x => x.Product.Price * x.Quantity).Sum(),
             Date = order.CreatedAt
         };
+
+    public static Func<Order, object> CreateProjection => Projection.Compile();
     
     public static Expression<Func<Order, object>> Projection =>
         order => new

@@ -16,17 +16,6 @@ public class OrdersController(AppDbContext ctx) : ControllerBase
         
         return Ok(orders);
     }
-
-    [HttpGet("/stations/{stationId}")]
-    public async Task<IActionResult> GetAllByStation(string stationId)
-    {
-        var orders = await ctx.Orders
-            .Find(x => x.StationId == stationId)
-            .Project(OrderViewModels.FlatProjection)
-            .ToListAsync();
-        
-        return Ok(orders);
-    }
     
     [HttpGet("{id}")]
     public async Task<IActionResult> GetById(string id)
@@ -103,24 +92,48 @@ public class OrdersController(AppDbContext ctx) : ControllerBase
                 StationId = createOrderForm.StationId,
                 StationName = station.Name,
                 ProductsInfo = createOrderForm.Products.Select(p => new ProductOrder
-                {
-                    Product = products.First(prod => prod.Id == p.ProductId),
-                    Quantity = p.Quantity
-                }).ToList()
+                    {
+                        Product = products.First(prod => prod.Id == p.ProductId),
+                        Quantity = p.Quantity
+                    })
+                    .ToList(),
+                PurchaseId = string.Empty
+            };
+
+            var purchase = new Purchase
+            {
+                Order = order,
+                QuantityRemaining = order.ProductsInfo.Sum(x => x.Quantity)
             };
             
-            var insertTask = ctx.Orders.InsertOneAsync(session, order);
+            var insertOrderTask = ctx.Orders.InsertOneAsync(session, order);
+            var insertPurchaseTask = ctx.Purchases.InsertOneAsync(session, purchase);
             
-            var stationUpdateTask = ctx.Stations
+            await Task.WhenAll(insertOrderTask, insertPurchaseTask);
+
+            order.PurchaseId = purchase.Id;
+            
+            var orderUpdateTask = ctx.Orders
+                .UpdateOneAsync(
+                    session,
+                    x => x.Id == order.Id,
+                    Builders<Order>.Update.Set(x => x.PurchaseId, purchase.Id));
+            
+            var purchaseUpdateTask = ctx.Purchases.UpdateOneAsync(
+                session,
+                x=>x.Id == purchase.Id,
+                Builders<Purchase>.Update.Set(x => x.Order, order));
+            
+            await Task.WhenAll(orderUpdateTask, purchaseUpdateTask);
+            
+            purchase.Order = order;
+            
+            var stationUpdateResult = await ctx.Stations
                 .UpdateOneAsync(
                     session,
                     x => x.Id == createOrderForm.StationId,
-                    Builders<Station>.Update.Push(x => x.Orders, order));
-            
-            await Task.WhenAll(insertTask, stationUpdateTask);
-            
-            var stationUpdateResult = await stationUpdateTask;
-            
+                    Builders<Station>.Update.Push(x => x.Purchases, purchase));
+          
             if (!stationUpdateResult.IsAcknowledged)
             {
                 await session.AbortTransactionAsync();
@@ -141,6 +154,11 @@ public class OrdersController(AppDbContext ctx) : ControllerBase
     [HttpPatch("{orderId}")]
     public async Task<IActionResult> UpdateStatus([FromRoute] string orderId, [FromBody] string status)
     {
+        if (string.IsNullOrEmpty(orderId) || string.IsNullOrEmpty(status))
+        {
+            return BadRequest();
+        }
+        
         using var session = await ctx.Client.StartSessionAsync();
         session.StartTransaction();
 
@@ -194,132 +212,6 @@ public class OrdersController(AppDbContext ctx) : ControllerBase
             return Problem("An error occured while updating the order.");
         }
     }
-
-    [HttpPatch("{id}/add-product")]
-    public async Task<IActionResult> AddProduct(string id, [FromBody] ProductInfoForm productInfoForm)
-    {
-        using var session = await ctx.Client.StartSessionAsync();
-        session.StartTransaction();
-
-        try
-        {
-            var product = await ctx.Products
-                .Find(session, x => x.Id == productInfoForm.ProductId)
-                .FirstOrDefaultAsync();
-
-            if (product == null)
-            {
-                return NotFound("Product not found.");
-            }
-            
-            var order = await ctx.Orders
-                .Find(session, x => x.Id == id)
-                .FirstOrDefaultAsync();
-            
-            if (order == null)
-            {
-                return NotFound("No order found.");
-            }
-            
-            var orderUpdateResult = await ctx.Orders.UpdateOneAsync(
-                session,
-                x => x.Id == id,
-                Builders<Order>.Update.Push(x => x.ProductsInfo, new ProductOrder
-                {
-                    Product = product,
-                    Quantity = productInfoForm.Quantity
-                }));
-
-            if (!orderUpdateResult.IsAcknowledged)
-            {
-                await session.AbortTransactionAsync();
-                return NotFound();
-            }
-            
-            var stationUpdateResult = await ctx.Stations.UpdateOneAsync(
-                x => x.Id == order.StationId && x.Orders.Any(o => o.Id == id),
-                Builders<Station>.Update.Set("Orders.$", order) 
-            );
-
-            if (!stationUpdateResult.IsAcknowledged)
-            {
-                await session.AbortTransactionAsync();
-                return Problem("An error occured while updating the order.");
-            }
-            
-            await session.CommitTransactionAsync();
-            return Ok();
-        }
-        catch (Exception e)
-        {
-            await session.AbortTransactionAsync();
-            Console.WriteLine(e);
-            return Problem("An error occured while updating the order.");
-        }
-    }
-    
-    
-    [HttpPatch("{id}/remove-product/{productId}")]
-    public async Task<IActionResult> RemoveProduct(string id, string productId)
-    {
-        using var session = await ctx.Client.StartSessionAsync();
-        session.StartTransaction();
-
-        try
-        {
-            var product = await ctx.Products
-                .Find(session, x => x.Id == productId)
-                .FirstOrDefaultAsync();
-
-            if (product == null)
-            {
-                await session.AbortTransactionAsync();
-                return NotFound("Product not found.");
-            }
-            
-            var order = await ctx.Orders
-                .Find(session, x => x.Id == id)
-                .FirstOrDefaultAsync();
-            
-            if (order == null)
-            {
-                await session.AbortTransactionAsync();
-                return NotFound("No order found.");
-            }
-
-            var orderUpdateResult = await ctx.Orders.UpdateOneAsync(
-                session,
-                x => x.Id == id,
-                Builders<Order>.Update.PullFilter(x => x.ProductsInfo, x => x.Product.Id == productId));
-
-            if (!orderUpdateResult.IsAcknowledged)
-            {
-                await session.AbortTransactionAsync();
-                return NotFound();
-            }
-            
-            var stationUpdateResult = await ctx.Stations.UpdateOneAsync(
-                session,
-                x => x.Id == order.StationId && x.Orders.Any(o => o.Id == id),
-                Builders<Station>.Update.Set("Orders.$", order) 
-            );
-
-            if (!stationUpdateResult.IsAcknowledged)
-            {
-                await session.AbortTransactionAsync();
-                return Problem("An error occured while updating the order.");
-            }
-            
-            await session.CommitTransactionAsync();
-            return Ok();
-        }
-        catch (Exception e)
-        {
-            await session.AbortTransactionAsync();
-            Console.WriteLine(e);
-            return Problem("An error occured while updating the order.");
-        }
-    }
     
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(string id)
@@ -329,12 +221,16 @@ public class OrdersController(AppDbContext ctx) : ControllerBase
 
         try
         {
-            var stationId = await ctx.Orders
+            var info = await ctx.Orders
                 .Find(session, x => x.Id == id)
-                .Project(x => x.StationId)
+                .Project(x => new
+                {
+                    x.StationId,
+                    x.PurchaseId
+                })
                 .FirstOrDefaultAsync();
 
-            if (stationId == null)
+            if (info == null)
             {
                 await session.AbortTransactionAsync();
                 return BadRequest("No station found.");
@@ -347,8 +243,8 @@ public class OrdersController(AppDbContext ctx) : ControllerBase
 
             var stationUpdateResult = await ctx.Stations.UpdateOneAsync(
                 session,
-                x => x.Id == stationId,
-                Builders<Station>.Update.PullFilter(x => x.Orders, order => order.Id == id));
+                x => x.Id == info.StationId,
+                Builders<Station>.Update.PullFilter(x => x.Purchases, p => p.Id == info.PurchaseId));
 
             if (!stationUpdateResult.IsAcknowledged || !removeOrderResult.IsAcknowledged)
             {

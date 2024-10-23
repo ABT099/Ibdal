@@ -5,6 +5,7 @@ namespace Ibdal.Models;
 public class Order : Archivable
 {
     public int OrderNumber { get; set; }
+    public required string PurchaseId { get; set; }
     public required string StationId { get; set; }
     public required string StationName { get; set; }
     public List<ProductOrder> ProductsInfo { get; set; } = [];

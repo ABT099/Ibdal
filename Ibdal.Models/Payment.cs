@@ -4,7 +4,6 @@ namespace Ibdal.Models;
 
 public class Payment : BaseModel
 {
-    public required Purchase Purchase { get; set; }
-    public double Amount { get; set; }
-    public DateTime Date { get; set; }
+    public required string PurchaseId { get; set; }
+    public int Amount { get; set; }
 }

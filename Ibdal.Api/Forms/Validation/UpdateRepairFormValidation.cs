@@ -1,12 +1,12 @@
 ﻿namespace Ibdal.Api.Forms.Validation;
 
-public class CreateRepairFormValidation : AbstractValidator<CreateRepairForm>
+public class UpdateRepairFormValidation : AbstractValidator<UpdateRepairForm>
 {
-    public CreateRepairFormValidation()
+    public UpdateRepairFormValidation()
     {
+        RuleFor(x => x.Id).NotEmpty();
         RuleFor(x => x.CarId).NotEmpty();
         RuleFor(x => x.StationId).NotEmpty();
         RuleFor(x => x.CategoryId).NotEmpty();
-        RuleFor(x => x.RepairItems.Count).GreaterThan(0);
     }
 }

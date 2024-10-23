@@ -4,10 +4,20 @@ namespace Ibdal.Models;
 
 public class Repair : BaseModel
 {
-    public required Car Car { get; set; }
-    public required Station Station { get; set; }
-    public required Category Category { get; set; }
-    public List<string> RepairItems { get; set; } = [];
-    public string Comment { get; set; } = string.Empty;
+    public required string CarId { get; set; }
+    public required string PlateNumber { get; set; }
+    public required string CarType { get; set; }
+    public required string CarModel { get; set; }
+    
+    
+    public required string StationId { get; set; }
+    public required string StationName { get; set; }
+    
+    
+    public required string CategoryId { get; set; }
+    public required string CategoryName { get; set; }
+    
+    public IList<string> RepairItems { get; set; } = [];
+    public string? Comment { get; set; }
     public string Status { get; set; } = "pending";
 }

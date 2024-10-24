@@ -12,12 +12,12 @@ public class Notification : BaseModel
 
 public class NotificationUser
 {
-    public required User User { get; set; }
+    public required string UserId { get; set; }
     public bool IsRead { get; set; }
 }
 
 public class NotificationStation
 {
-    public required Station Station { get; set; }
+    public required string StationId { get; set; }
     public bool IsRead { get; set; }
 }

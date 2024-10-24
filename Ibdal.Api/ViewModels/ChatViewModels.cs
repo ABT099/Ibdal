@@ -13,6 +13,7 @@ public static class ChatViewModels
         chat => new
         {
             chat.Id,
+            chat.Name,
             Messages = MessageViewModels.CreateFlat
         };
 }

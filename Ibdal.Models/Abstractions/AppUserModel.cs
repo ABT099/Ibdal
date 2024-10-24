@@ -16,5 +16,6 @@ public abstract class AppUserModel : Archivable
     public int Points { get; set; } = 0;
     public required string PhoneNumber { get; set; }
     public IList<Car> Cars { get; set; } = [];
+    public int NotReadNotifications = 0;
     public Chat Chat { get; set; }
 }

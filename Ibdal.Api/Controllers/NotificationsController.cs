@@ -20,7 +20,7 @@ public class NotificationsController(AppDbContext ctx) : ControllerBase
     {
         var notifications = await ctx.Notifications
             .Find(x => x.Users
-                .Select(n => n.User.Id)
+                .Select(n => n.UserId)
                 .Contains(userId))
             .Project(NotificationViewModels.FlatUserProjection)
             .ToListAsync();
@@ -33,7 +33,7 @@ public class NotificationsController(AppDbContext ctx) : ControllerBase
     {
         var notifications = await ctx.Notifications
             .Find(x => x.Stations
-                .Select(n => n.Station.Id)
+                .Select(n => n.StationId)
                 .Contains(stationId))
             .Project(NotificationViewModels.FlatStationProjection)
             .ToListAsync();
@@ -56,8 +56,8 @@ public class NotificationsController(AppDbContext ctx) : ControllerBase
         {
             Title = createNotificationForm.Title,
             Description = createNotificationForm.Description,
-            Users = users.Select(u => new NotificationUser { User = u, IsRead = false }).ToList(),
-            Stations = stations.Select(s => new NotificationStation { Station = s, IsRead = false }).ToList(),
+            Users = users.Select(u => new NotificationUser { UserId = u.Id, IsRead = false }).ToList(),
+            Stations = stations.Select(s => new NotificationStation { StationId = s.Id, IsRead = false }).ToList(),
         };
         
         await ctx.Notifications.InsertOneAsync(notification);
@@ -80,8 +80,8 @@ public class NotificationsController(AppDbContext ctx) : ControllerBase
         {
             Title = notificationsForm.Title,
             Description = notificationsForm.Description,
-            Users = allUsers.Select(u => new NotificationUser { User = u, IsRead = false }).ToList(),
-            Stations = allStations.Select(s => new NotificationStation { Station = s, IsRead = false }).ToList(),
+            Users = allUsers.Select(u => new NotificationUser { UserId = u.Id, IsRead = false }).ToList(),
+            Stations = allStations.Select(s => new NotificationStation { StationId = s.Id, IsRead = false }).ToList(),
         };
 
         await ctx.Notifications.InsertOneAsync(notification);
@@ -101,7 +101,7 @@ public class NotificationsController(AppDbContext ctx) : ControllerBase
         {
             Title = notificationsForm.Title,
             Description = notificationsForm.Description,
-            Users = allUsers.Select(u => new NotificationUser { User = u, IsRead = false }).ToList(),
+            Users = allUsers.Select(u => new NotificationUser { UserId = u.Id, IsRead = false }).ToList(),
         };
         
         await ctx.Notifications.InsertOneAsync(notification);
@@ -114,7 +114,7 @@ public class NotificationsController(AppDbContext ctx) : ControllerBase
     {
         var filter = Builders<Notification>.Filter.ElemMatch(
             n => n.Users,
-            u => u.User.Id == userId && !u.IsRead);
+            u => u.UserId == userId && !u.IsRead);
 
         var update = Builders<Notification>.Update.Set(
             n => n.Users[-1].IsRead, true);
@@ -140,7 +140,7 @@ public class NotificationsController(AppDbContext ctx) : ControllerBase
         {
             Title = notificationsForm.Title,
             Description = notificationsForm.Description,
-            Stations = allStations.Select(s => new NotificationStation { Station = s, IsRead = false }).ToList(),
+            Stations = allStations.Select(s => new NotificationStation { StationId = s.Id, IsRead = false }).ToList(),
         };
         
         await ctx.Notifications.InsertOneAsync(notification);
@@ -153,7 +153,7 @@ public class NotificationsController(AppDbContext ctx) : ControllerBase
     {
         var filter = Builders<Notification>.Filter.ElemMatch(
             n => n.Stations,
-            u => u.Station.Id == stationId && !u.IsRead);
+            u => u.StationId == stationId && !u.IsRead);
 
         var update = Builders<Notification>.Update.Set(
             n => n.Stations[-1].IsRead, true);
@@ -182,8 +182,8 @@ public class NotificationsController(AppDbContext ctx) : ControllerBase
             .Set(n => n.Title, updateNotificationForm.Title)
             .Set(n => n.Description, updateNotificationForm.Description);
         
-        var currentUserIds = notification.Users.Select(u => u.User.Id).ToHashSet();
-        var currentStationIds = notification.Stations.Select(s => s.Station.Id).ToHashSet();
+        var currentUserIds = notification.Users.Select(u => u.UserId).ToHashSet();
+        var currentStationIds = notification.Stations.Select(s => s.StationId).ToHashSet();
 
         var tasks = new List<Task>();
         
@@ -193,7 +193,7 @@ public class NotificationsController(AppDbContext ctx) : ControllerBase
                 .Find(x => updateNotificationForm.UsersIds.Contains(x.Id))
                 .Project(u => new NotificationUser
                 {
-                    User = u,
+                    UserId = u.Id,
                     IsRead = false
                 }).ToListAsync();
 
@@ -207,7 +207,7 @@ public class NotificationsController(AppDbContext ctx) : ControllerBase
                 .Find(x => updateNotificationForm.StationsIds.Contains(x.Id))
                 .Project(s => new NotificationStation
                 {
-                    Station = s,
+                    StationId = s.Id,
                     IsRead = false
                 }).ToListAsync();
 

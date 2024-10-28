@@ -3,8 +3,7 @@
 namespace Ibdal.Api.Controllers;
 
 [Route("api/[controller]")]
-[ApiController]
-public class UsersController(AppDbContext ctx, AuthService authService) : ControllerBase
+public class UsersController(AppDbContext ctx, AuthService authService) : ApiController
 {
     [HttpGet]
     public async Task<IActionResult> GetAll()
@@ -23,6 +22,22 @@ public class UsersController(AppDbContext ctx, AuthService authService) : Contro
         var user = await ctx.Users
             .Find(x => x.Id == id)
             .Project(UserViewModels.Projection)
+            .FirstOrDefaultAsync();
+
+        if (user == null)
+        {
+            return NotFound();
+        }
+        
+        return Ok(user);
+    }
+
+    [HttpGet("me")]
+    public async Task<IActionResult> GetMe()
+    {
+        var user = await ctx.Users
+            .Find(x => x.Id == Id)
+            .Project(UserViewModels.FullProjection)
             .FirstOrDefaultAsync();
 
         if (user == null)

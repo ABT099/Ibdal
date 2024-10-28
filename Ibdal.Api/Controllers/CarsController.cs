@@ -1,8 +1,7 @@
 ﻿namespace Ibdal.Api.Controllers;
 
 [Route("api/[controller]")]
-[ApiController]
-public class CarsController(AppDbContext ctx) : ControllerBase
+public class CarsController(AppDbContext ctx) : ApiController
 {
     [HttpGet("user/{userId}")]
     public async Task<IActionResult> GetAllByUser(string userId)
@@ -24,10 +23,36 @@ public class CarsController(AppDbContext ctx) : ControllerBase
             {
                 Cars = x.Cars.Select(y => CarViewModels.CreateFlat(y))
             })
-            .FirstOrDefaultAsync();
+            .ToListAsync();
         
         return Ok(cars);
     }
+
+    [HttpGet("mine")]
+    public async Task<IActionResult> GetMine()
+    {
+        List<object>? cars = [];
+        
+        if (Role == Constants.Roles.Customer)
+        {
+            cars = await ctx.Cars
+                .Find(x => x.OwnerId == Id)
+                .Project(CarViewModels.FlatProjection)
+                .ToListAsync();
+        } 
+        else if (Role == Constants.Roles.Station)
+        {
+            cars = [await ctx.Stations
+                .Find(x => x.Id == Id)
+                .Project(x => new
+                {
+                    Cars = x.Cars.Select(y => CarViewModels.CreateFlat(y))
+                })
+                .ToListAsync()];
+        }
+        
+        return Ok(cars);
+    } 
 
     [HttpGet("{id:}")]
     public async Task<ActionResult> GetById(string id)

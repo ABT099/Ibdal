@@ -4,8 +4,7 @@ using Microsoft.AspNetCore.Identity;
 namespace Ibdal.Api.Controllers;
 
 [Route("api/[controller]")]
-[ApiController]
-public class StationsController(AppDbContext ctx, AuthService authService) : ControllerBase
+public class StationsController(AppDbContext ctx, AuthService authService) : ApiController
 {
     [HttpGet]
     public async Task<IActionResult> GetAll()
@@ -34,6 +33,22 @@ public class StationsController(AppDbContext ctx, AuthService authService) : Con
         return Ok(station);
     }
 
+    [HttpGet("me")]
+    public async Task<IActionResult> GetMe()
+    {
+        var station = await ctx.Stations
+            .Find(x => x.Id == Id)
+            .Project(StationViewModels.FullProjection)
+            .FirstOrDefaultAsync();
+        
+        if (station == null)
+        {
+            return NotFound();
+        }
+        
+        return Ok(station);
+    }
+    
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateStationForm createStationForm)
     {

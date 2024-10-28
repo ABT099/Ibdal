@@ -20,4 +20,16 @@ public static class UserViewModels
             user.Cars,
             ChatId = user.Chat.Id
         };
+    
+    public static Expression<Func<User, object>> FullProjection =>
+        user => new
+        {
+            user.Id,
+            user.Name,
+            user.PhoneNumber,
+            user.Points,
+            user.Cars,
+            user.Notifications,
+            ChatId = user.Chat.Id
+        };
 }

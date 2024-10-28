@@ -20,4 +20,17 @@ public static class StationViewModels
             station.Repairs,
             station.Purchases
         };
+    
+    public static Expression<Func<Station, object>> FullProjection =>
+        station => new
+        {
+            station.Id,
+            station.Name,
+            station.Address,
+            station.City,
+            station.Notifications,
+            station.Cars,
+            station.Repairs,
+            station.Purchases
+        };
 }

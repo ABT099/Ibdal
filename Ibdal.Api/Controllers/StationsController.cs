@@ -1,8 +1,11 @@
-﻿namespace Ibdal.Api.Controllers;
+﻿using Ibdal.Api.Services;
+using Microsoft.AspNetCore.Identity;
+
+namespace Ibdal.Api.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
-public class StationsController(AppDbContext ctx) : ControllerBase
+public class StationsController(AppDbContext ctx, AuthService authService) : ControllerBase
 {
     [HttpGet]
     public async Task<IActionResult> GetAll()
@@ -34,9 +37,13 @@ public class StationsController(AppDbContext ctx) : ControllerBase
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateStationForm createStationForm)
     {
+        var authId = await authService.CreateUser(createStationForm.Username, createStationForm.Password);
+        
+        if (authId == null) return BadRequest("user already exists");
+        
         var station = new Station
         {
-            AuthId = string.Empty,
+            AuthId = authId,
             Name = createStationForm.Name,
             PhoneNumber = createStationForm.PhoneNumber,
             City = createStationForm.City,

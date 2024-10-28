@@ -1,8 +1,10 @@
-﻿namespace Ibdal.Api.Controllers;
+﻿using Ibdal.Api.Services;
+
+namespace Ibdal.Api.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
-public class UsersController(AppDbContext ctx) : ControllerBase
+public class UsersController(AppDbContext ctx, AuthService authService) : ControllerBase
 {
     [HttpGet]
     public async Task<IActionResult> GetAll()
@@ -34,9 +36,13 @@ public class UsersController(AppDbContext ctx) : ControllerBase
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateUserForm createUserForm)
     {
+        var authId = await authService.CreateUser(createUserForm.Username, createUserForm.Password);
+        
+        if (authId == null) return BadRequest("user already exists");
+        
         var user = new User
         {
-            AuthId = string.Empty,
+            AuthId = authId,
             Name = createUserForm.Name,
             PhoneNumber = createUserForm.PhoneNumber,
         };

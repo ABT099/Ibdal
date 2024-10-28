@@ -95,5 +95,7 @@ public static class RegisterServices
             .AddPolicy(Constants.Policies.Station, policy => policy.RequireClaim(Constants.Claims.Role ,Constants.Roles.Station))
             .AddPolicy(Constants.Policies.Customer, policy => policy.RequireClaim(Constants.Claims.Role ,Constants.Roles.Customer));
 
+        builder.Services.AddSingleton<AuthService>();
+
     }
 }

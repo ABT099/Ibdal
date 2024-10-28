@@ -44,69 +44,123 @@ public class NotificationsController(AppDbContext ctx) : ControllerBase
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateNotificationForm createNotificationForm)
     {
-        var users = await ctx.Users
-            .Find(x => createNotificationForm.UsersIds.Contains(x.Id))
-            .ToListAsync();
-        
-        var stations = await ctx.Stations
-            .Find(x => createNotificationForm.StationsIds.Contains(x.Id))
-            .ToListAsync();
-        
-        var notification = new Notification
-        {
-            Title = createNotificationForm.Title,
-            Description = createNotificationForm.Description,
-            Users = users.Select(u => new NotificationUser { UserId = u.Id, IsRead = false }).ToList(),
-            Stations = stations.Select(s => new NotificationStation { StationId = s.Id, IsRead = false }).ToList(),
-        };
-        
-        await ctx.Notifications.InsertOneAsync(notification);
+        using var session = await ctx.Client.StartSessionAsync();
+        session.StartTransaction();
 
-        return Ok();
+        try
+        {
+            var notification = new Notification
+            {
+                Title = createNotificationForm.Title,
+                Description = createNotificationForm.Description,
+                Users = createNotificationForm.UsersIds.Select(u => new NotificationUser { UserId = u, IsRead = false }).ToList(),
+                Stations = createNotificationForm.StationsIds.Select(s => new NotificationStation { StationId = s, IsRead = false }).ToList(),
+            };
+        
+            await ctx.Notifications.InsertOneAsync(session, notification);
+            
+            var userFilter = Builders<User>.Filter.In(x => x.Id, createNotificationForm.UsersIds);
+            var userUpdate = Builders<User>.Update.Push(x => x.Notifications, notification);
+            var updateUserTask = ctx.Users.UpdateManyAsync(session, userFilter, userUpdate);
+
+            var stationFilter = Builders<Station>.Filter.In(x => x.Id, createNotificationForm.StationsIds);
+            var stationUpdate = Builders<Station>.Update.Push(x => x.Notifications, notification);
+            var updateStationTask = ctx.Stations.UpdateManyAsync(session, stationFilter, stationUpdate);
+
+            await Task.WhenAll(updateUserTask, updateStationTask);
+            
+            await session.CommitTransactionAsync();
+            return Ok();
+        }
+        catch (Exception e)
+        {
+            await session.AbortTransactionAsync();
+            Console.WriteLine(e);
+            return Problem();
+        }
     }
     
     [HttpPost("/all")]
     public async Task<IActionResult> CreateForAll([FromBody] NotificationToAllForm notificationsForm)
     {
-        var allUsers = await ctx.Users
-            .Find(_ => true)
-            .ToListAsync();
+        using var session = await ctx.Client.StartSessionAsync();
+        session.StartTransaction();
 
-        var allStations = await ctx.Stations
-            .Find(_ => true)
-            .ToListAsync();
-
-        var notification = new Notification
+        try
         {
-            Title = notificationsForm.Title,
-            Description = notificationsForm.Description,
-            Users = allUsers.Select(u => new NotificationUser { UserId = u.Id, IsRead = false }).ToList(),
-            Stations = allStations.Select(s => new NotificationStation { StationId = s.Id, IsRead = false }).ToList(),
-        };
+            var allUsers = await ctx.Users
+                .Find(session, _ => true)
+                .Project(x => x.Id)
+                .ToListAsync();
 
-        await ctx.Notifications.InsertOneAsync(notification);
+            var allStations = await ctx.Stations
+                .Find(session, _ => true)
+                .Project(x => x.Id)
+                .ToListAsync();
 
-        return Ok();
+            var notification = new Notification
+            {
+                Title = notificationsForm.Title,
+                Description = notificationsForm.Description,
+                Users = allUsers.Select(u => new NotificationUser { UserId = u, IsRead = false }).ToList(),
+                Stations = allStations.Select(s => new NotificationStation { StationId = s, IsRead = false }).ToList(),
+            };
+
+            await ctx.Notifications.InsertOneAsync(session, notification);
+            
+            var userUpdate = Builders<User>.Update.Push(x => x.Notifications, notification);
+            var updateUserTask = ctx.Users.UpdateManyAsync(session, Builders<User>.Filter.Empty, userUpdate);
+
+            var stationUpdate = Builders<Station>.Update.Push(x => x.Notifications, notification);
+            var updateStationTask = ctx.Stations.UpdateManyAsync(session, Builders<Station>.Filter.Empty, stationUpdate);
+
+            await Task.WhenAll(updateUserTask, updateStationTask);
+
+            await session.CommitTransactionAsync();
+            return Ok();
+        }
+        catch (Exception e)
+        {
+            await session.AbortTransactionAsync();
+            Console.WriteLine(e); 
+            return Problem();
+        }
     }
-    
     
     [HttpPost("/users")]
     public async Task<IActionResult> CreateForAllUsers([FromBody] NotificationToAllForm notificationsForm)
     {
-        var allUsers = await ctx.Users
-            .Find(_ => true)
-            .ToListAsync();
+        using var session = await ctx.Client.StartSessionAsync();
+        session.StartTransaction();
 
-        var notification = new Notification
+        try
         {
-            Title = notificationsForm.Title,
-            Description = notificationsForm.Description,
-            Users = allUsers.Select(u => new NotificationUser { UserId = u.Id, IsRead = false }).ToList(),
-        };
-        
-        await ctx.Notifications.InsertOneAsync(notification);
+            var allUsers = await ctx.Users
+                .Find(session, _ => true)
+                .Project(x => x.Id)
+                .ToListAsync();
 
-        return Ok();
+            var notification = new Notification
+            {
+                Title = notificationsForm.Title,
+                Description = notificationsForm.Description,
+                Users = allUsers.Select(u => new NotificationUser { UserId = u, IsRead = false }).ToList(),
+            };
+            
+            await ctx.Notifications.InsertOneAsync(session, notification);
+            
+            var update = Builders<User>.Update.Push(x => x.Notifications, notification);
+            await ctx.Users.UpdateManyAsync(session, Builders<User>.Filter.Empty, update);
+
+            await session.CommitTransactionAsync();
+            return Ok();
+        }
+        catch (Exception e)
+        {
+            await session.AbortTransactionAsync();
+            Console.WriteLine(e); 
+            return Problem();
+        }
     }
     
     [HttpPost("/users/read/{userId}")]
@@ -132,20 +186,37 @@ public class NotificationsController(AppDbContext ctx) : ControllerBase
     [HttpPost("/stations")]
     public async Task<IActionResult> CreateForAllStations([FromBody] NotificationToAllForm notificationsForm)
     {
-        var allStations = await ctx.Stations
-            .Find(_ => true)
-            .ToListAsync();
-        
-        var notification = new Notification
-        {
-            Title = notificationsForm.Title,
-            Description = notificationsForm.Description,
-            Stations = allStations.Select(s => new NotificationStation { StationId = s.Id, IsRead = false }).ToList(),
-        };
-        
-        await ctx.Notifications.InsertOneAsync(notification);
+        using var session = await ctx.Client.StartSessionAsync();
+        session.StartTransaction();
 
-        return Ok();
+        try
+        {
+            var allStations = await ctx.Stations
+                .Find(session, _ => true)
+                .Project(x => x.Id)
+                .ToListAsync();
+        
+            var notification = new Notification
+            {
+                Title = notificationsForm.Title,
+                Description = notificationsForm.Description,
+                Stations = allStations.Select(s => new NotificationStation { StationId = s, IsRead = false }).ToList(),
+            };
+        
+            await ctx.Notifications.InsertOneAsync(session, notification);
+            
+            var update = Builders<Station>.Update.Push(x => x.Notifications, notification);
+            await ctx.Stations.UpdateManyAsync(session, Builders<Station>.Filter.Empty, update);
+
+            await session.CommitTransactionAsync();
+            return Ok();
+        }
+        catch (Exception e)
+        {
+            await session.AbortTransactionAsync();
+            Console.WriteLine(e); 
+            return Problem();
+        }
     }
     
     [HttpPost("/stations/read/{stationId}")]

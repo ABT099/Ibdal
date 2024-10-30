@@ -22,3 +22,5 @@ riderModule.iml
 *.dbmdl
 *.dbproj.schemaview
 *.jfm
+
+/Ibdal.Api/key

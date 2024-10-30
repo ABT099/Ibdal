@@ -16,6 +16,7 @@ public static class RegisterServices
         builder.Services.AddControllers();
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddFluentValidationAutoValidation();
+        builder.Services.AddSwaggerGen();
         
         builder.Services.AddMongoDb<AppDbContext>(
             connectionString: builder.Configuration["MongoDb:ConnectionString"]!,
@@ -95,7 +96,7 @@ public static class RegisterServices
             .AddPolicy(Constants.Policies.Station, policy => policy.RequireClaim(Constants.Claims.Role ,Constants.Roles.Station))
             .AddPolicy(Constants.Policies.Customer, policy => policy.RequireClaim(Constants.Claims.Role ,Constants.Roles.Customer));
 
-        builder.Services.AddSingleton<AuthService>();
+        builder.Services.AddScoped<AuthService>();
 
     }
 }

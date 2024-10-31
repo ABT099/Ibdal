@@ -1,4 +1,5 @@
-﻿using Ibdal.Api.Services;
+﻿using Ibdal.Api.Data;
+using Ibdal.Api.Services;
 using Microsoft.AspNetCore.Identity;
 
 namespace Ibdal.Api.Controllers;
@@ -10,7 +11,7 @@ public class StationsController(AppDbContext ctx, AuthService authService) : Api
     public async Task<IActionResult> GetAll()
     {
         var stations = await ctx.Stations
-            .Find(_ => true)
+            .FindNonArchived(_ => true)
             .Project(StationViewModels.FlatProjection)
             .ToListAsync();
         
@@ -21,7 +22,7 @@ public class StationsController(AppDbContext ctx, AuthService authService) : Api
     public async Task<IActionResult> GetById(string id)
     {
         var station = await ctx.Stations
-            .Find(x => x.Id == id)
+            .FindNonArchived(x => x.Id == id)
             .Project(StationViewModels.Projection)
             .FirstOrDefaultAsync();
 
@@ -37,7 +38,7 @@ public class StationsController(AppDbContext ctx, AuthService authService) : Api
     public async Task<IActionResult> GetMe()
     {
         var station = await ctx.Stations
-            .Find(x => x.Id == Id)
+            .FindNonArchived(x => x.Id == Id)
             .Project(StationViewModels.FullProjection)
             .FirstOrDefaultAsync();
         
@@ -74,7 +75,7 @@ public class StationsController(AppDbContext ctx, AuthService authService) : Api
     public async Task<IActionResult> Update([FromBody] UpdateStationForm updateStationForm)
     {
         var station = await ctx.Stations
-            .Find(x => x.Id == updateStationForm.Id)
+            .FindNonArchived(x => x.Id == updateStationForm.Id)
             .FirstOrDefaultAsync();
 
         if (station == null)
@@ -97,7 +98,7 @@ public class StationsController(AppDbContext ctx, AuthService authService) : Api
     {
         var deleteStationResult = await ctx.Stations.UpdateOneAsync(
             x => x.Id == id,
-            Builders<Station>.Update.Set(x => x.IsDeleted, true));
+            Builders<Station>.Update.Set(x => x.Archived, true));
 
         if (!deleteStationResult.IsAcknowledged)
         {

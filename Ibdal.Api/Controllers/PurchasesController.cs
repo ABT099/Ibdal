@@ -1,4 +1,6 @@
-﻿namespace Ibdal.Api.Controllers;
+﻿using Ibdal.Api.Data;
+
+namespace Ibdal.Api.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]

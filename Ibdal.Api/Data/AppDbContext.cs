@@ -1,7 +1,6 @@
-﻿using Ibdal.Models;
-using Identity.Mongo;
+﻿using Identity.Mongo;
 
-namespace Ibdal.Api;
+namespace Ibdal.Api.Data;
 
 public class AppDbContext : MongoDbContext
 {

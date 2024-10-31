@@ -1,4 +1,5 @@
 ﻿using FluentValidation.AspNetCore;
+using Ibdal.Api.Data;
 using Ibdal.Api.Services;
 using Identity.Mongo;
 using Microsoft.AspNetCore.Authentication.JwtBearer;

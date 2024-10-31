@@ -1,4 +1,5 @@
-﻿using Ibdal.Api.Services;
+﻿using Ibdal.Api.Data;
+using Ibdal.Api.Services;
 
 namespace Ibdal.Api.Controllers;
 
@@ -10,7 +11,7 @@ public class ProductsController(AppDbContext ctx) : ControllerBase
     public async Task<IActionResult> GetAll()
     {
         var products = await ctx.Products
-            .Find(_ => true)
+            .FindNonArchived(_ => true)
             .Project(ProductViewModels.FlatProjection)
             .ToListAsync();
         
@@ -21,7 +22,7 @@ public class ProductsController(AppDbContext ctx) : ControllerBase
     public async Task<IActionResult> GetById(string id)
     {
         var product = await ctx.Products
-            .Find(x => x.Id == id)
+            .FindNonArchived(x => x.Id == id)
             .Project(ProductViewModels.Projection)
             .FirstOrDefaultAsync();
 
@@ -56,7 +57,7 @@ public class ProductsController(AppDbContext ctx) : ControllerBase
     public async Task<IActionResult> Update([FromBody] UpdateProductForm updateProductForm)
     {
         var product = await ctx.Products
-            .Find(updateProductForm.Id)
+            .FindNonArchived(x => x.Id == updateProductForm.Id)
             .FirstOrDefaultAsync();
 
         if (product == null)
@@ -85,7 +86,7 @@ public class ProductsController(AppDbContext ctx) : ControllerBase
     {
         var result = await ctx.Products.UpdateOneAsync(
             x => x.Id == id,
-            Builders<Product>.Update.Set(x => x.IsDeleted, true));
+            Builders<Product>.Update.Set(x => x.Archived, true));
 
         if (!result.IsAcknowledged)
         {

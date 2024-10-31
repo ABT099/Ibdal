@@ -1,4 +1,6 @@
-﻿namespace Ibdal.Api.Controllers;
+﻿using Ibdal.Api.Data;
+
+namespace Ibdal.Api.Controllers;
 
 [Route("api/[controller]")]
 public class CarsController(AppDbContext ctx) : ApiController
@@ -7,7 +9,7 @@ public class CarsController(AppDbContext ctx) : ApiController
     public async Task<IActionResult> GetAllByUser(string userId)
     {
         var cars = await ctx.Cars
-            .Find(x => x.OwnerId == userId)
+            .FindNonArchived(x => x.OwnerId == userId)
             .Project(CarViewModels.FlatProjection)
             .ToListAsync();
         
@@ -18,7 +20,7 @@ public class CarsController(AppDbContext ctx) : ApiController
     public async Task<IActionResult> GetAllByStation(string stationId)
     {
         var cars = await ctx.Stations
-            .Find(x => x.Id == stationId)
+            .FindNonArchived(x => x.Id == stationId)
             .Project(x => new
             {
                 Cars = x.Cars.Select(y => CarViewModels.CreateFlat(y))
@@ -36,14 +38,14 @@ public class CarsController(AppDbContext ctx) : ApiController
         if (Role == Constants.Roles.Customer)
         {
             cars = await ctx.Cars
-                .Find(x => x.OwnerId == Id)
+                .FindNonArchived(x => x.OwnerId == Id)
                 .Project(CarViewModels.FlatProjection)
                 .ToListAsync();
         } 
         else if (Role == Constants.Roles.Station)
         {
             cars = [await ctx.Stations
-                .Find(x => x.Id == Id)
+                .FindNonArchived(x => x.Id == Id)
                 .Project(x => new
                 {
                     Cars = x.Cars.Select(y => CarViewModels.CreateFlat(y))
@@ -58,7 +60,7 @@ public class CarsController(AppDbContext ctx) : ApiController
     public async Task<ActionResult> GetById(string id)
     {
         var car = await ctx.Cars
-            .Find(x => x.Id == id)
+            .FindNonArchived(x => x.Id == id)
             .Project(CarViewModels.Projection)
             .FirstOrDefaultAsync();
         
@@ -72,7 +74,7 @@ public class CarsController(AppDbContext ctx) : ApiController
     public async Task<ActionResult> GetByPlate(string plateNumber)
     {
         var car = await ctx.Cars
-            .Find(x => x.PlateNumber == plateNumber)
+            .FindNonArchived(x => x.PlateNumber == plateNumber)
             .Project(CarViewModels.Projection)
             .FirstOrDefaultAsync();
         
@@ -131,14 +133,14 @@ public class CarsController(AppDbContext ctx) : ApiController
         try
         {
             var car = await ctx.Cars
-                .Find(x => x.Id == updateCarForm.Id)
+                .FindNonArchived(x => x.Id == updateCarForm.Id)
                 .FirstOrDefaultAsync();
         
             if (car is null)
                 return NotFound("car does not exist");
             
             var owner = await ctx.Users
-                .Find(x => x.Id == car.OwnerId)
+                .FindNonArchived(x => x.Id == car.OwnerId)
                 .FirstOrDefaultAsync();
             
             if (owner is null)
@@ -186,14 +188,14 @@ public class CarsController(AppDbContext ctx) : ApiController
         try
         {
             var userId = await ctx.Cars
-                .Find(x => x.Id == id)
+                .FindNonArchived(x => x.Id == id)
                 .Project(x => x.OwnerId)
                 .FirstOrDefaultAsync();
 
             var carRemoveResult = await ctx.Cars.UpdateOneAsync(
                 session,
                 x => x.Id == id,
-                Builders<Car>.Update.Set(x => x.IsDeleted, true));
+                Builders<Car>.Update.Set(x => x.Archived, true));
 
             if (!carRemoveResult.IsAcknowledged)
             {

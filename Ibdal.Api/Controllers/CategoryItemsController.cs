@@ -1,4 +1,5 @@
-﻿using Ibdal.Api.Services;
+﻿using Ibdal.Api.Data;
+using Ibdal.Api.Services;
 
 namespace Ibdal.Api.Controllers;
 

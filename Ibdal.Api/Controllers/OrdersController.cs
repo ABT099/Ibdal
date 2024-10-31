@@ -1,4 +1,5 @@
-﻿using MongoDB.Bson;
+﻿using Ibdal.Api.Data;
+using MongoDB.Bson;
 
 namespace Ibdal.Api.Controllers;
 
@@ -239,7 +240,7 @@ public class OrdersController(AppDbContext ctx) : ControllerBase
             var removeOrderResult = await ctx.Orders.UpdateOneAsync(
                 session,
                 x => x.Id == id,
-                Builders<Order>.Update.Set(x => x.IsDeleted, true));
+                Builders<Order>.Update.Set(x => x.Archived, true));
 
             var stationUpdateResult = await ctx.Stations.UpdateOneAsync(
                 session,

@@ -1,4 +1,6 @@
-﻿namespace Ibdal.Api.Controllers;
+﻿using Ibdal.Api.Data;
+
+namespace Ibdal.Api.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
@@ -19,7 +21,7 @@ public class NotificationsController(AppDbContext ctx) : ControllerBase
     public async Task<IActionResult> GetByUserId(string userId)
     {
         var notifications = await ctx.Notifications
-            .Find(x => x.Users
+            .FindNonArchived(x => x.Users
                 .Select(n => n.UserId)
                 .Contains(userId))
             .Project(NotificationViewModels.FlatUserProjection)
@@ -32,7 +34,7 @@ public class NotificationsController(AppDbContext ctx) : ControllerBase
     public async Task<IActionResult> GetByStationId(string stationId)
     {
         var notifications = await ctx.Notifications
-            .Find(x => x.Stations
+            .FindNonArchived(x => x.Stations
                 .Select(n => n.StationId)
                 .Contains(stationId))
             .Project(NotificationViewModels.FlatStationProjection)
@@ -89,12 +91,12 @@ public class NotificationsController(AppDbContext ctx) : ControllerBase
         try
         {
             var allUsers = await ctx.Users
-                .Find(session, _ => true)
+                .FindNonArchived(session, _ => true)
                 .Project(x => x.Id)
                 .ToListAsync();
 
             var allStations = await ctx.Stations
-                .Find(session, _ => true)
+                .FindNonArchived(session, _ => true)
                 .Project(x => x.Id)
                 .ToListAsync();
 
@@ -136,7 +138,7 @@ public class NotificationsController(AppDbContext ctx) : ControllerBase
         try
         {
             var allUsers = await ctx.Users
-                .Find(session, _ => true)
+                .FindNonArchived(session, _ => true)
                 .Project(x => x.Id)
                 .ToListAsync();
 
@@ -192,7 +194,7 @@ public class NotificationsController(AppDbContext ctx) : ControllerBase
         try
         {
             var allStations = await ctx.Stations
-                .Find(session, _ => true)
+                .FindNonArchived(session, _ => true)
                 .Project(x => x.Id)
                 .ToListAsync();
         
@@ -243,7 +245,7 @@ public class NotificationsController(AppDbContext ctx) : ControllerBase
     public async Task<IActionResult> Update([FromBody] UpdateNotificationForm updateNotificationForm)
     {
         var notification = await ctx.Notifications
-            .Find(x => x.Id == updateNotificationForm.Id)
+            .FindNonArchived(x => x.Id == updateNotificationForm.Id)
             .FirstOrDefaultAsync();
         
         if (notification == null)
@@ -261,7 +263,7 @@ public class NotificationsController(AppDbContext ctx) : ControllerBase
         if (!currentUserIds.SequenceEqual(updateNotificationForm.UsersIds))
         {
             var fetchUsersTask = ctx.Users
-                .Find(x => updateNotificationForm.UsersIds.Contains(x.Id))
+                .FindNonArchived(x => updateNotificationForm.UsersIds.Contains(x.Id))
                 .Project(u => new NotificationUser
                 {
                     UserId = u.Id,
@@ -275,7 +277,7 @@ public class NotificationsController(AppDbContext ctx) : ControllerBase
         if (!currentStationIds.SequenceEqual(updateNotificationForm.StationsIds))
         {
             var fetchStationsTask = ctx.Stations
-                .Find(x => updateNotificationForm.StationsIds.Contains(x.Id))
+                .FindNonArchived(x => updateNotificationForm.StationsIds.Contains(x.Id))
                 .Project(s => new NotificationStation
                 {
                     StationId = s.Id,
@@ -294,7 +296,7 @@ public class NotificationsController(AppDbContext ctx) : ControllerBase
         );
         
         if (updateResult.ModifiedCount == 0)
-            return StatusCode(StatusCodes.Status500InternalServerError, "Failed to update notification");
+            return Problem("Failed to update notification");
 
         return Ok();
     }

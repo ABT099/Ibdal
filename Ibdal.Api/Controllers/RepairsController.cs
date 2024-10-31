@@ -1,4 +1,5 @@
-﻿using MongoDB.Bson;
+﻿using Ibdal.Api.Data;
+using MongoDB.Bson;
 
 namespace Ibdal.Api.Controllers;
 

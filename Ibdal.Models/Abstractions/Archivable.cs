@@ -2,5 +2,5 @@
 
 public class Archivable : BaseModel
 {
-    public bool IsDeleted { get; set; } = false;
+    public bool Archived { get; set; } = false;
 }

@@ -1,4 +1,5 @@
-﻿using Ibdal.Api.Services;
+﻿using Ibdal.Api.Data;
+using Ibdal.Api.Services;
 
 namespace Ibdal.Api.Controllers;
 
@@ -9,7 +10,7 @@ public class UsersController(AppDbContext ctx, AuthService authService) : ApiCon
     public async Task<IActionResult> GetAll()
     {
         var users = await ctx.Users
-            .Find(_ => true)
+            .FindNonArchived(_ => true)
             .Project(UserViewModels.FlatProjection)
             .ToListAsync();
         
@@ -20,7 +21,7 @@ public class UsersController(AppDbContext ctx, AuthService authService) : ApiCon
     public async Task<IActionResult> GetById(string id)
     {
         var user = await ctx.Users
-            .Find(x => x.Id == id)
+            .FindNonArchived(x => x.Id == id)
             .Project(UserViewModels.Projection)
             .FirstOrDefaultAsync();
 
@@ -36,7 +37,7 @@ public class UsersController(AppDbContext ctx, AuthService authService) : ApiCon
     public async Task<IActionResult> GetMe()
     {
         var user = await ctx.Users
-            .Find(x => x.Id == Id)
+            .FindNonArchived(x => x.Id == Id)
             .Project(UserViewModels.FullProjection)
             .FirstOrDefaultAsync();
 
@@ -91,7 +92,7 @@ public class UsersController(AppDbContext ctx, AuthService authService) : ApiCon
     {
         var deleteResult = await ctx.Users.UpdateOneAsync(
             x => x.Id == id,
-            Builders<User>.Update.Set(x => x.IsDeleted, true));
+            Builders<User>.Update.Set(x => x.Archived, true));
 
         if (!deleteResult.IsAcknowledged)
         {

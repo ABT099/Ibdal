@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using Ibdal.Api.Data;
 using Ibdal.Api.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -30,11 +31,11 @@ public class AuthenticationController : ControllerBase
         var identity = principal.Identities.First();
 
         var id = await ctx.Users
-                     .Find(x => x.AuthId == user.Id)
+                     .FindNonArchived(x => x.AuthId == user.Id)
                      .Project(x => x.Id)
                      .FirstOrDefaultAsync()
                  ?? await ctx.Stations
-                     .Find(x => x.AuthId == user.Id)
+                     .FindNonArchived(x => x.AuthId == user.Id)
                      .Project(x => x.Id)
                      .FirstOrDefaultAsync();
 

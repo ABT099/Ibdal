@@ -1,4 +1,6 @@
-﻿namespace Ibdal.Api.Controllers;
+﻿using Ibdal.Api.Data;
+
+namespace Ibdal.Api.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
@@ -42,12 +44,12 @@ public class OilController(AppDbContext ctx) : ControllerBase
             .FirstOrDefaultAsync();
 
         var carTask = ctx.Cars
-            .Find(x => x.Id == createOilChangeForm.CarId)
+            .FindNonArchived(x => x.Id == createOilChangeForm.CarId)
             .Project(x => x.Id)
             .FirstOrDefaultAsync();
 
         var stationTask = ctx.Stations
-            .Find(x => x.Id == createOilChangeForm.StationId)
+            .FindNonArchived(x => x.Id == createOilChangeForm.StationId)
             .Project(x => x.Id)
             .FirstOrDefaultAsync();
 
@@ -116,12 +118,12 @@ public class OilController(AppDbContext ctx) : ControllerBase
             return NotFound("Oil change not found");
         
         var carTask = ctx.Cars
-            .Find(x => x.Id == oilChange.CarId)
+            .FindNonArchived(x => x.Id == oilChange.CarId)
             .Project(x => x.OilChanges)
             .FirstOrDefaultAsync();
         
         var stationTask = ctx.Stations
-            .Find(x => x.Id == oilChange.StationId)
+            .FindNonArchived(x => x.Id == oilChange.StationId)
             .Project(x => x.OilChanges)
             .FirstOrDefaultAsync();
         
@@ -147,7 +149,7 @@ public class OilController(AppDbContext ctx) : ControllerBase
             !string.IsNullOrWhiteSpace(updateOilChangeForm.ProductId))
         {
             var product = await ctx.Products
-                .Find(x => x.Id == updateOilChangeForm.ProductId)
+                .FindNonArchived(x => x.Id == updateOilChangeForm.ProductId)
                 .Project(x => new
                 {
                     x.Name,

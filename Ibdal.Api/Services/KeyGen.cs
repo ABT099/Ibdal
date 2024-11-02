@@ -1,6 +1,6 @@
 ﻿using System.Security.Cryptography;
 
-namespace Ibdal.Api;
+namespace Ibdal.Api.Services;
 
 public static class KeyGen
 {

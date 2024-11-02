@@ -18,6 +18,8 @@ public static class RegisterServices
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddFluentValidationAutoValidation();
         builder.Services.AddSwaggerGen();
+
+        builder.Services.AddSignalR();
         
         builder.Services.AddMongoDb<AppDbContext>(
             connectionString: builder.Configuration["MongoDb:ConnectionString"]!,

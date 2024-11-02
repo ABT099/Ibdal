@@ -28,62 +28,6 @@ public class ChatsController(AppDbContext ctx) : ControllerBase
         return Ok(chat);
     }
 
-    [HttpPost("messages")]
-    public async Task<IActionResult> CreateMessage([FromBody] CreateMessageForm createMessageForm)
-    {
-        using var session = await ctx.Client.StartSessionAsync();
-        session.StartTransaction();
-
-        try
-        {
-            var chat = await ctx.Chats
-                .Find(session, x => x.Id == createMessageForm.ChatId)
-                .FirstOrDefaultAsync();
-            
-            if (chat == null)
-            {
-                await session.AbortTransactionAsync();
-                return NotFound("chat not found");
-            }
-            
-            var message = new Message
-            {
-                ChatId = createMessageForm.ChatId,
-                SenderId = createMessageForm.SenderId,
-                Text = createMessageForm.Text
-            };
-            
-            var chatUpdateTask = ctx.Chats.UpdateOneAsync(
-                session,
-                x => x.Id == createMessageForm.ChatId,
-                Builders<Chat>.Update.Push(x => x.Messages, message));
-            
-            var messageInsertTask = ctx.Messages.InsertOneAsync(session, message);
-
-            await Task.WhenAll(chatUpdateTask, messageInsertTask);
-
-            var userResult = await ctx.Users.UpdateOneAsync(
-                session,
-                x => x.Id == chat.Id,
-                Builders<User>.Update.Set(x => x.Chat, chat));
-
-            if (!userResult.IsAcknowledged)
-            {
-                await session.AbortTransactionAsync();
-                return NotFound("user not found");
-            }
-            
-            await session.CommitTransactionAsync();
-            return Ok();
-        }
-        catch (Exception e)
-        {
-            await session.AbortTransactionAsync();
-            Console.WriteLine(e);
-            return Problem("something went wrong");
-        }
-    }
-
     [HttpPut("messages")]
     public async Task<IActionResult> UpdateMessage([FromBody] UpdateMessageForm updateMessageForm)
     {

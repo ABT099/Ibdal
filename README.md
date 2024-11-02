@@ -52,8 +52,8 @@ Update your MongoDB settings in `appsettings.json`:
 
 1. **Clone the Repository**
    ```bash
-   git clone <repository-url>
-   cd ibdal-backend
+   git clone https://github.com/ABT099/Ibdal.git
+   cd Ibdal
    ```
 
 2. **Restore Packages**
